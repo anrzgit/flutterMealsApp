@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:meals_app/data/dummy_data.dart';
 import 'package:meals_app/models/category_model.dart';
+import 'package:meals_app/models/meals_model.dart';
 import 'package:meals_app/screens/meals_screen.dart';
 
 import 'package:meals_app/widgets/category_grid_item.dart';
 
 class CategoriesScreen extends StatelessWidget {
-  const CategoriesScreen({super.key});
+  const CategoriesScreen({super.key, required this.onToggleFav});
+
+  final Function(Meal meal) onToggleFav;
 
   void _selectCategory(BuildContext context, Category category) {
     // context is not available globally in stateless so you have to accept it
@@ -18,8 +21,11 @@ class CategoriesScreen extends StatelessWidget {
         .toList();
 
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (ctx) =>
-          MealsScreen(meals: filteredMeals, title: category.title),
+      builder: (ctx) => MealsScreen(
+        meals: filteredMeals,
+        title: category.title,
+        onToggleFav: onToggleFav,
+      ),
     ));
   }
 

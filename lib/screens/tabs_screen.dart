@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:meals_app/models/meals_model.dart';
 import 'package:meals_app/screens/categories_screen.dart';
 import 'package:meals_app/screens/meals_screen.dart';
 
@@ -11,6 +12,32 @@ class TabsScreen extends StatefulWidget {
 }
 
 class _TabsScreenState extends State<TabsScreen> {
+  final List<Meal> _faVMeals = [];
+
+  void _showInfoMessege(String messege) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(messege),
+      ),
+    );
+  }
+
+  void _toggleMeaLFavStatus(Meal meal) {
+    final isExisting = _faVMeals.contains(meal);
+
+    if (isExisting) {
+      setState(() {
+        _faVMeals.remove(meal);
+        _showInfoMessege("Removed From Fav");
+      });
+    } else {
+      setState(() {
+        _faVMeals.add(meal);
+        _showInfoMessege("Added To Fav");
+      });
+    }
+  }
+
   int selectedPageIndex = 0;
 
   late PageController pageController;
@@ -41,11 +68,15 @@ class _TabsScreenState extends State<TabsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: PageView(
+          physics: const NeverScrollableScrollPhysics(),
           controller: pageController,
           onPageChanged: onPageChanged,
-          children: const [
-            CategoriesScreen(),
-            MealsScreen(meals: [], title: "Favorites")
+          children: [
+            CategoriesScreen(onToggleFav: _toggleMeaLFavStatus),
+            MealsScreen(
+                meals: _faVMeals,
+                title: "Favorites",
+                onToggleFav: _toggleMeaLFavStatus)
           ]),
       bottomNavigationBar: CupertinoTabBar(
         currentIndex: selectedPageIndex,
