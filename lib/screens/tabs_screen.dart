@@ -1,8 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:meals_app/data/dummy_data.dart';
 import 'package:meals_app/models/meals_model.dart';
 import 'package:meals_app/screens/categories_screen.dart';
+import 'package:meals_app/screens/filters_screen.dart';
 import 'package:meals_app/screens/meals_screen.dart';
+import 'package:meals_app/widgets/main_drawer.dart';
+
+const kInitialFilters = {
+  Filter.glutenFree: false,
+  Filter.lacoseFree: false,
+  Filter.vegan: false,
+  Filter.vegeterian: false,
+};
 
 class TabsScreen extends StatefulWidget {
   const TabsScreen({super.key});
@@ -13,6 +24,7 @@ class TabsScreen extends StatefulWidget {
 
 class _TabsScreenState extends State<TabsScreen> {
   final List<Meal> _faVMeals = [];
+  Map<Filter, bool> _selectedFilters = kInitialFilters;
 
   void _showInfoMessege(String messege) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -42,6 +54,8 @@ class _TabsScreenState extends State<TabsScreen> {
 
   late PageController pageController;
 
+  late String activePageTitle = "Categories";
+
   @override
   void initState() {
     pageController = PageController();
@@ -56,6 +70,16 @@ class _TabsScreenState extends State<TabsScreen> {
 
   void _selectpage(int page) {
     pageController.jumpToPage(page);
+    if (page == 0) {
+      setState(() {
+        activePageTitle = "Categories";
+      });
+    }
+    if (page == 1) {
+      setState(() {
+        activePageTitle = "Your Favoirates";
+      });
+    }
   }
 
   void onPageChanged(int page) {
@@ -64,19 +88,55 @@ class _TabsScreenState extends State<TabsScreen> {
     });
   }
 
+  void _setScreen(String stringIdentifier) async {
+    Navigator.of(context).pop();
+    if (stringIdentifier == "filters") {
+      final result = await Navigator.of(context).push<Map<Filter, bool>>(
+        MaterialPageRoute(
+            builder: (context) => FilterScreen(
+                  currentFilters: _selectedFilters,
+                )),
+      );
+      setState(() {
+        _selectedFilters = result ??
+            kInitialFilters; //?? default values to use in case of null
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final availableMeals = dummyMeals.where((meal) {
+      if (_selectedFilters[Filter.glutenFree]! && !meal.isGlutenFree) {
+        return false;
+      } else if (_selectedFilters[Filter.lacoseFree]! && !meal.isLactoseFree) {
+        return false;
+      } else if (_selectedFilters[Filter.vegeterian]! && !meal.isVegetarian) {
+        return false;
+      } else if (_selectedFilters[Filter.vegan]! && !meal.isVegan) {
+        return false;
+      }
+      return true;
+    });
+
     return Scaffold(
+      //hamberger menu it will show up in the appbar added below always
+      drawer: MainDrawer(onSelectScreen: _setScreen),
+      appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle(
+            systemNavigationBarColor: Theme.of(context).canvasColor),
+        title: Text(activePageTitle),
+      ),
       body: PageView(
           physics: const NeverScrollableScrollPhysics(),
           controller: pageController,
           onPageChanged: onPageChanged,
           children: [
-            CategoriesScreen(onToggleFav: _toggleMeaLFavStatus),
-            MealsScreen(
-                meals: _faVMeals,
-                title: "Favorites",
-                onToggleFav: _toggleMeaLFavStatus)
+            CategoriesScreen(
+              onToggleFav: _toggleMeaLFavStatus,
+              availableMeals: availableMeals.toList(),
+            ),
+            MealsScreen(meals: _faVMeals, onToggleFav: _toggleMeaLFavStatus)
           ]),
       bottomNavigationBar: CupertinoTabBar(
         currentIndex: selectedPageIndex,

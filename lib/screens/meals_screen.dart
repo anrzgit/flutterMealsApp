@@ -5,13 +5,10 @@ import 'package:meals_app/widgets/meal_item.dart';
 
 class MealsScreen extends StatelessWidget {
   const MealsScreen(
-      {super.key,
-      required this.meals,
-      required this.title,
-      required this.onToggleFav});
+      {super.key, required this.meals, this.title, required this.onToggleFav});
 
   final List<Meal> meals;
-  final String title;
+  final String? title; //can be made null using ?
   final Function(Meal meal) onToggleFav;
 
   void selectMeal(BuildContext context, Meal meal) {
@@ -50,10 +47,14 @@ class MealsScreen extends StatelessWidget {
         ]),
       );
     }
+    if (title == null) {
+      return content;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          title,
+          title!,
         ),
       ),
       body: content,
