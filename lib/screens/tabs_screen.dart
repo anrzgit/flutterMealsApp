@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meals_app/data/dummy_data.dart';
 import 'package:meals_app/models/meals_model.dart';
+import 'package:meals_app/provider/favoirtes_provider.dart';
+import 'package:meals_app/provider/meals_provider.dart';
 import 'package:meals_app/screens/categories_screen.dart';
 import 'package:meals_app/screens/filters_screen.dart';
 import 'package:meals_app/screens/meals_screen.dart';
@@ -15,15 +18,16 @@ const kInitialFilters = {
   Filter.vegeterian: false,
 };
 
-class TabsScreen extends StatefulWidget {
+class TabsScreen extends ConsumerStatefulWidget {
+  //replace stateful with ConsumerStatefulWidget to use provider
   const TabsScreen({super.key});
 
   @override
-  State<TabsScreen> createState() => _TabsScreenState();
+  ConsumerState<TabsScreen> createState() => _TabsScreenState();
+  //replace state with ConsumerState to use provider
 }
 
-class _TabsScreenState extends State<TabsScreen> {
-  final List<Meal> _faVMeals = [];
+class _TabsScreenState extends ConsumerState<TabsScreen> {
   Map<Filter, bool> _selectedFilters = kInitialFilters;
 
   void _showInfoMessege(String messege) {
@@ -32,22 +36,6 @@ class _TabsScreenState extends State<TabsScreen> {
         content: Text(messege),
       ),
     );
-  }
-
-  void _toggleMeaLFavStatus(Meal meal) {
-    final isExisting = _faVMeals.contains(meal);
-
-    if (isExisting) {
-      setState(() {
-        _faVMeals.remove(meal);
-        _showInfoMessege("Removed From Fav");
-      });
-    } else {
-      setState(() {
-        _faVMeals.add(meal);
-        _showInfoMessege("Added To Fav");
-      });
-    }
   }
 
   int selectedPageIndex = 0;
@@ -106,7 +94,9 @@ class _TabsScreenState extends State<TabsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final availableMeals = dummyMeals.where((meal) {
+    //To use the data
+    final meals = ref.watch(mealsProvider);
+    final availableMeals = meals.where((meal) {
       if (_selectedFilters[Filter.glutenFree]! && !meal.isGlutenFree) {
         return false;
       } else if (_selectedFilters[Filter.lacoseFree]! && !meal.isLactoseFree) {
@@ -118,6 +108,8 @@ class _TabsScreenState extends State<TabsScreen> {
       }
       return true;
     });
+
+    final favMealsFromProvider = ref.watch(favMealsProvider);
 
     return Scaffold(
       //hamberger menu it will show up in the appbar added below always
@@ -133,10 +125,11 @@ class _TabsScreenState extends State<TabsScreen> {
           onPageChanged: onPageChanged,
           children: [
             CategoriesScreen(
-              onToggleFav: _toggleMeaLFavStatus,
               availableMeals: availableMeals.toList(),
             ),
-            MealsScreen(meals: _faVMeals, onToggleFav: _toggleMeaLFavStatus)
+            MealsScreen(
+              meals: favMealsFromProvider,
+            )
           ]),
       bottomNavigationBar: CupertinoTabBar(
         currentIndex: selectedPageIndex,
