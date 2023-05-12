@@ -14,24 +14,29 @@ class MealDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     //in stateless "WidgetRef ref" should be added no need in stateful
+
+    final favMeals = ref.watch(favMealsProvider);
+    final isFav = favMeals.contains(meal);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(meal.title),
         actions: [
           IconButton(
-              //use .notifier to access the class in provider
-              onPressed: () {
-                final wasAdded = ref
-                    .read(favMealsProvider.notifier)
-                    .toggleMealFavStatus(meal);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content:
-                        Text(wasAdded ? 'Added to fav' : 'removed from fav'),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.favorite_border))
+            //use .notifier to access the class in provider
+            onPressed: () {
+              final wasAdded =
+                  ref.read(favMealsProvider.notifier).toggleMealFavStatus(meal);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(wasAdded ? 'Added to fav' : 'removed from fav'),
+                ),
+              );
+            },
+            icon: isFav
+                ? const Icon(Icons.favorite)
+                : const Icon(Icons.favorite_border),
+          )
         ],
       ),
       body: SingleChildScrollView(
